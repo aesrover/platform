@@ -1,5 +1,4 @@
 import matplotlib.pyplot as plt
-from matplotlib.patches import Arrow
 import math
 import random
 import numpy as np
@@ -52,6 +51,9 @@ class FakeThruster(Thruster):
         print("T{} Power: {}".format(self.num, p))
 
 
+FPS_SCALE = 1/10
+LIN_GAIN = 10
+ROT_GAIN = 10
 TARGETS = [(0,0), (10,5), (5,5)]
 ths = ((math.pi/2, (10, 0)), (math.pi/2, (-1, 0)), (0, (0, 1)), (0, (0, -1)))  # All Thrusters
 
@@ -68,7 +70,7 @@ if __name__ == "__main__":
     pt.set_position(10,10)
     ht = TestHT()
     ht.set_heading(90)
-    ac = AutoCalc(pt, ht, 50, 1, 5, 0.5, min_m=0.01, rot_gain=0.5)
+    ac = AutoCalc(pt, ht, 10, 1, 5, 0.2, min_m=0.01, rot_gain=0.5)
 
     t_i = -1
 
@@ -100,6 +102,7 @@ if __name__ == "__main__":
     sbp.autoscale(True)
     # Create axis:
     ax = fig1.add_axes(sbp)
+    plt.axis('equal')  # CRUCIAL for quiver alignment
     print("TYPE: {}".format(type(ax)))
 
     # Initial plot:
@@ -108,15 +111,16 @@ if __name__ == "__main__":
 
     heading_ap = None
     thrustv_ap = None
+    targetv_ap = None
 
     def arrow_update(ap, x,y,dx,dy, *args, **kwargs):
-        if ap is not None:
-            ap.remove()
-        return ax.add_patch(
-            Arrow(x, y, dx, dy, *args, **kwargs))
+        if ap is None:
+            return ax.quiver(x, y, dx, dy, *args, **kwargs)
 
-    #def quiver_update(q, x,y,dx,dy, *args, **kwargs):
-    #    ax.quiver().update()
+        ap.set_offsets((x, y))
+        ap.set_UVC(dx, dy)
+        return ap
+
 
     while True:
         print("\n\n")
@@ -132,7 +136,7 @@ if __name__ == "__main__":
 
         # Add arrow
         heading_ap = arrow_update(heading_ap, cur_pos[0], cur_pos[1], 10*math.sin(cur_ang), 10*math.cos(cur_ang),
-                                  width=1, color="#aa0088")
+                                  color="#aa0088")
 
         # Update fake transducers:
         s = math.sin(-cur_ang)
@@ -142,7 +146,10 @@ if __name__ == "__main__":
         revv = rot_mat.dot(d.nav[0:2])
         print("Reversed vector: {}".format(revv))
         thrustv_ap = arrow_update(thrustv_ap, cur_pos[0], cur_pos[1], 10*revv[0,0], 10*revv[0,1],
-                                  width=1, color="#f1f442")
+                                  color="#000000", units='inches')# #f1f442
+
+        #targetv_ap = arrow_update(targetv_ap, cur_pos[0], cur_pos[1], ac.target[0]-cur_pos[0],
+        #                          ac.target[1]-cur_pos[1], color="#4286f4", units='inches')
 
         # PLOT UPDATE:
         # Fix autoscale:
@@ -151,7 +158,7 @@ if __name__ == "__main__":
         # Draw new plot:
         plt.draw()
         # Pause for plot update:
-        plt.pause(0.1)
+        plt.pause(FPS_SCALE)
 
         if d.state:
             t = next_target(False)  # Get next target
@@ -161,10 +168,10 @@ if __name__ == "__main__":
             target_pos.set_xdata([t[0]])
             target_pos.set_ydata([t[1]])
 
-        pt.set_position(cur_pos[0]+revv[0,0], cur_pos[1]+revv[0,1])
+        pt.set_position(cur_pos[0]+(revv[0,0]*FPS_SCALE*LIN_GAIN), cur_pos[1]+(revv[0,1]*FPS_SCALE*LIN_GAIN))
 
         print("CURR ANG: {}".format(cur_ang))
-        angle_step = (d.nav[2])/1
+        angle_step = (d.nav[2])*FPS_SCALE*ROT_GAIN
         print("STEP ANGLE DIFF: {}".format(angle_step))
         ht.set_heading((((cur_ang-angle_step)*(180/math.pi))+360)%360)
         print("ANG NEW: {}".format(ht.a))
