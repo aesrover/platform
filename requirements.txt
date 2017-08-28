@@ -1,0 +1,1 @@
+git+git://github.com/aesrover/python-aesrdevicelib.git@v2.0

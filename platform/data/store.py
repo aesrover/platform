@@ -4,9 +4,9 @@ import time
 
 # Typing Hints:
 from typing import List
+from aesrdevicelib.base.transducer import Transducer
 
 from .data import DataHandler
-from .transducer.transducer import Transducer
 
 
 class Store:

@@ -3,8 +3,7 @@ import numpy as np
 
 from typing import Union, Tuple
 
-# Local:
-from platform.data.transducer.navigation import PositionTransducer, HeadingTransducer
+from aesrdevicelib.base.navigation import PositionTransducer, HeadingTransducer
 
 
 class _Mode:
