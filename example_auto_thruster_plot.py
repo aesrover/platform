@@ -21,11 +21,11 @@ class TestPT(PositionTransducer):
     def set_position(self, vx, vy):
         self.p = (vx, vy)
 
-    def read_transducer(self):
+    def read(self):
         return self.p
 
     def read_xy_pos(self) -> Tuple[float, float]:
-        return self.read_transducer()
+        return self.read()
 
 
 class TestHT(HeadingTransducer):
@@ -36,11 +36,11 @@ class TestHT(HeadingTransducer):
     def set_heading(self, a):
         self.a = a
 
-    def read_transducer(self):
+    def read(self):
         return self.a
 
     def read_heading(self):
-        return self.read_transducer()
+        return self.read()
 
 
 class FakeThruster(Thruster):
