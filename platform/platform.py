@@ -3,8 +3,9 @@ from logging import Logger
 # Typing:
 from typing import List
 
+from aesrdevicelib.base.transducer import Transducer
+
 # Data:
-from .data.transducer.transducer import Transducer
 from .data.data import DataHandler
 
 from .data.store import StoreThreaded

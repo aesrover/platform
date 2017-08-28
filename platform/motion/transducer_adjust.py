@@ -3,9 +3,8 @@ import time
 # Logging:
 from logging import Logger
 
-# Local:
-from ..data.transducer.navigation import Transducer
-from .motor import Motor
+from aesrdevicelib.base.motor import Motor
+from aesrdevicelib.base.transducer import Transducer
 
 
 class TransducerAdjustHandler:

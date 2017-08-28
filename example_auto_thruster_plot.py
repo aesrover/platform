@@ -6,10 +6,11 @@ import numpy as np
 # Typing:
 from typing import Tuple
 
+from aesrdevicelib.base.motor import Thruster
+from aesrdevicelib.base.navigation import PositionTransducer, HeadingTransducer
+
 from platform.motion.movement.auto import AutoCalc
-from platform.motion.movement.thruster import Thruster
 from platform.motion.movement.movement import ThrusterManager
-from platform.data.transducer.navigation import PositionTransducer, HeadingTransducer
 
 
 class TestPT(PositionTransducer):

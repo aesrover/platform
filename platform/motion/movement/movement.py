@@ -1,9 +1,9 @@
 from typing import Tuple, List
 import numpy as np
 import math
+from aesrdevicelib.base.motor import Thruster
 
 # Local:
-from .thruster import Thruster
 
 
 class ThrusterManager:
