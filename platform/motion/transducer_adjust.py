@@ -34,7 +34,7 @@ class TransducerMotorDrive(TransducerAdjustHandler):
             self.gain = 1
 
     def _adjust_step(self, target) -> bool:
-        t_val = self.t.read_transducer()  # Read transducer
+        t_val = self.t.read()  # Read transducer
 
         diff = target - t_val  # Calculate difference between target value and current
         p = diff/self.max_diff  # Divide by max difference
