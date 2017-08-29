@@ -9,8 +9,8 @@ from typing import Tuple
 from aesrdevicelib.base.motor import Thruster
 from aesrdevicelib.base.navigation import PositionTransducer, HeadingTransducer
 
-from platform.motion.movement.auto import AutoCalc
-from platform.motion.movement.movement import ThrusterManager
+from aesr_platform.motion.movement.auto import AutoCalc
+from aesr_platform.motion.movement.movement import ThrusterManager
 
 
 class TestPT(PositionTransducer):
