@@ -2,6 +2,7 @@ from typing import Tuple, List
 import numpy as np
 import math
 import time
+from logging import Logger
 from aesrdevicelib.base.motor import Thruster
 
 from threading import Thread
@@ -73,8 +74,9 @@ class ThrusterManager:
 
 
 class AutoThrustThreaded(Thread):
-    def __init__(self, tm: ThrusterManager, ac: AutoCalc=None, rate: int=5, t_name: str=None):
+    def __init__(self, log: Logger, tm: ThrusterManager, ac: AutoCalc=None, rate: int=5, t_name: str=None):
         super().__init__(name=t_name)
+        self.log = log
         self.tm = tm
         self.ac = ac
         self.rt = 1./rate  # Calculate run time
@@ -83,6 +85,9 @@ class AutoThrustThreaded(Thread):
 
         self.running = False
         self.man_t = None  # Manual thrust
+
+        self.since_auto_log = None
+        self.last_auto = False
 
     def start(self):
         self.running = True
@@ -119,7 +124,22 @@ class AutoThrustThreaded(Thread):
             if self.ac is not None and self.auto:
                 d = self.ac.calc()
                 tv = d.nav
+                if not self.last_auto:
+                    self.last_auto = True
+                    self.log.debug("Auto enabled", extra={'type': 'AUTO', 'status': True})
+
+                if self.since_auto_log is None or self.since_auto_log > 10:
+                    self.since_auto_log = 0
+                    self.log.debug("Auto status", extra={'type': 'AUTO', 'mode': d.mode, 'nav': d.nav,
+                                                         'curr_pos': d.pos, 'curr_ang': d.ang})
+                else:
+                    self.since_auto_log += 1
+
             elif self.man_t is not None:  # Manual
+                if self.last_auto:
+                    self.last_auto = False
+                    self.log.debug("Auto disabled", extra={'type': 'AUTO', 'status': False, 'mode': "MANUAL"})
+
                 tv = self.man_t
             else:
                 print("No manual value")
