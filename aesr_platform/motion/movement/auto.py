@@ -68,6 +68,15 @@ class AutoCalc:
         curr_pos = self.pt.read_xy_pos()
         print("Cur pos: {}, target: {}".format(curr_pos, self.target))
 
+        a = self.ht.read_heading()
+        a = ((a + 180) % 360) - 180  # Convert to [-180,180] range
+        a *= math.pi / 180  # convert to radians now [-pi,pi] range
+        print("Angle: {}".format(a))
+
+        if curr_pos[0] is None or curr_pos[1] is None:
+            print("NO GPS")
+            return self.AutoData((0, 0, 0), False, curr_pos, a, mode="NOGPS")
+
         if self.d_scale is not None:
             pd_dir: np.ndarray = self.d_scale.calc(self.target, curr_pos)
         else:
@@ -97,11 +106,6 @@ class AutoCalc:
         # Check if outside hold area:
         if self.mode == _Mode.HOLD and dist > self.hold_r:
             self.mode = _Mode.REPOS
-
-        a = self.ht.read_heading()
-        a = ((a + 180) % 360)-180  # Convert to [-180,180] range
-        a *= math.pi/180  # convert to radians now [-pi,pi] range
-        print("Angle: {}".format(a))
 
         # If in hold mode, return no thrust:
         if self.mode == _Mode.HOLD:
