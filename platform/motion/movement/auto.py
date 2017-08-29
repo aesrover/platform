@@ -6,6 +6,15 @@ from typing import Union, Tuple
 from aesrdevicelib.base.navigation import PositionTransducer, HeadingTransducer
 
 
+class DynamicScaleDiff:
+    @staticmethod
+    def _diff(t: tuple, cp: tuple):
+        return np.subtract(t, cp)
+
+    def calc(self, t, cp) -> np.ndarray:
+        raise NotImplementedError
+
+
 class _Mode:
     REPOS = 1  # Repositioning
     HOLD = 2  # Holding (not driving)
@@ -21,11 +30,12 @@ class AutoCalc:
             self.ang = ang
             self.mode = mode
 
-    def __init__(self, pt: PositionTransducer, ht: HeadingTransducer, max_d, target_r, hold_r, max_m, min_m=0, rot_gain = 1,
-                 diff_scale: Tuple[float, float] = (1,1)):
+    def __init__(self, pt: PositionTransducer, ht: HeadingTransducer, max_d, target_r, hold_r, max_m, min_m=0,
+                 rot_gain=1, diff_scale: Tuple[float, float] = (1,1), dynamic_scale: DynamicScaleDiff=None):
         self.pt = pt
         self.ht = ht
         self.scale = diff_scale
+        self.d_scale = dynamic_scale
         self.max_d = max_d
         self.min_m = min_m
         self.target_r = target_r
@@ -53,7 +63,10 @@ class AutoCalc:
         curr_pos = self.pt.read_xy_pos()
         print("Cur pos: {}, target: {}".format(curr_pos, self.target))
 
-        pd_dir: np.array = np.multiply(self.scale, tuple(np.subtract(self.target, curr_pos)))
+        if self.d_scale is not None:
+            pd_dir: np.ndarray = self.d_scale.calc(self.target, curr_pos)
+        else:
+            pd_dir: np.ndarray = np.multiply(self.scale, tuple(np.subtract(self.target, curr_pos)))
 
         pd_scaled = []
         for i, v in np.ndenumerate(pd_dir):
