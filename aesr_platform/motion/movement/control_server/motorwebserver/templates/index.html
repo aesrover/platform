@@ -1,0 +1,246 @@
+<html>
+	<head>
+		<link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+
+		<style>
+		body {
+			overflow	: hidden;
+			padding		: 0;
+			margin		: 0;
+			background-color: #BBB;
+		}
+		#info {
+			position	: absolute;
+			top		: 0px;
+			width		: 100%;
+			padding		: 5px;
+			text-align	: center;
+		}
+		#statusData {
+			position	: absolute;
+			top		: 0px;
+			right		: 0px;
+			width		: 25%;
+			padding		: 5px;
+			text-align	: center;
+			background-color: #D5CFCD;
+			max-height: 100%;
+			overflow:auto;
+			white-space: nowrap;
+		}
+		#statusInfo {
+			position	: absolute;
+			top		: 0px;
+			left		: 0px;
+			width		: 25%;
+			padding		: 5px;
+			text-align	: center;
+			background-color: #D5CFCD;
+			max-height: 100%;
+			overflow:auto;
+			white-space: nowrap;
+		}
+        #autoControl {
+			position	: absolute;
+			bottom      : 0px;
+			right		: 0px;
+			width		: 25%;
+			padding		: 5px;
+			text-align	: center;
+			background-color: #D5CFCD;
+			max-height: 100%;
+			overflow:auto;
+			white-space: nowrap;
+		}
+		#container {
+			width		: 100%;
+			height		: 100%;
+			overflow	: hidden;
+			padding		: 0;
+			margin		: 0;
+			-webkit-user-select	: none;
+			-moz-user-select	: none;
+		}
+		</style>
+	</head>
+	<body>
+		<div id="container"></div>
+		<div id="info">
+			AESR
+			<br/>
+			Touch the screen and move
+			-
+			works with mouse too
+			<br/>
+		<div id="statusInfo">OTHER STATUS<br/></div>
+		<div id="statusData">STATUS (NEW->OLD)<br/></div>
+		<span id="result"></span>
+		</div>
+        <div id="autoControl">
+            <div id="autoStatus">Auto: Disabled</div><br/>
+            <input id="autotog" type="button" value="Auto Toggle" onclick="switchAutoState();" /><br/>
+        </div>
+		<script type="text/javascript" src="/static/scripts/virtualjoystick.js"></script>
+		<script type="text/javascript" src="/static/scripts/socket.io-1.4.5.js"></script>
+		<script>
+			function escapeHtml(unsafe) {
+				if (unsafe != null) {
+					return unsafe
+					.replace(/&/g, "&amp;")
+					.replace(/</g, "&lt;")
+					.replace(/>/g, "&gt;")
+					.replace(/"/g, "&quot;")
+					.replace(/'/g, "&#039;");
+				}
+				return unsafe
+			}
+
+			function getIfExistsStr(suffix, element, prefix) {
+				if (element != null) {
+					return suffix + element.toString() + prefix
+				} else {
+					return ""
+				}
+			}
+
+
+			var socket = io.connect('http://' + document.domain + ':' + location.port);
+			console.log("touchscreen is", VirtualJoystick.touchScreenAvailable() ? "available" : "not available");
+
+			var maxDeviceStatusTime = 4
+
+			var joyRadius = 140
+
+			var statusData = []
+			var lastStatusDataTime = null
+
+			var joystick	= new VirtualJoystick({
+				container	: document.getElementById('container'),
+				mouseSupport	: true,
+				stationaryBase: true,
+				baseX: window.innerWidth/2,
+				baseY: window.innerHeight/2,
+				limitStickTravel: true,
+				stickRadius: joyRadius,
+			});
+			joystick.addEventListener('touchStart', function(){
+				console.log('push')
+			})
+			joystick.addEventListener('touchEnd', function(){
+				console.log('release')
+			})
+
+			// Update statusData variable on status data receive
+			socket.on('status', function (data) {
+				statusData = data
+				lastStatusDataTime = (new Date()).getTime()
+			});
+
+
+			var auto_state = false;
+			var auto_status_div = document.getElementById('autoStatus');
+            function switchAutoState() {
+                auto_state = !auto_state;
+                console.log(auto_state)
+                if(auto_state) {
+                    socket.emit("set_auto_state", {state: 1})
+                } else {
+                    socket.emit("set_auto_state", {state: 0})
+                }
+
+            }
+
+            setInterval(function() {
+                socket.emit("req_auto_state", {})
+            }, 1/30 * 1100);
+
+            socket.on('auto_status', function (data) {
+                var s = data.state;
+                var rem = data.remaining;
+                if (s === true){
+                    auto_status_div.innerHTML = "Auto: Enabled";
+                } else if (s === false){
+                    auto_status_div.innerHTML = "Auto: Disabled";
+                } else {
+                    auto_status_div.innerHTML = "Returned " + data;
+                }
+                auto_status_div.innerHTML = auto_status_div.innerHTML + " (" + rem + " remaining)";
+				auto_state = s;
+			});
+
+			// Status display updating
+			setInterval(function(){
+				// Status data DIV:
+				var statusDataDiv = document.getElementById('statusData');
+				statusDataDiv.innerHTML = "STATUS (NEW->OLD)\n"
+				statusDataDiv.appendChild(document.createElement("br"));
+
+				for (var i = 0; i < statusData.length; i++) {
+					var d = new Date();
+					var newData = statusData[i]
+
+					lastTime = (d.getTime()/1000) - newData.ts
+					newStatusText = escapeHtml(getIfExistsStr("", newData.atype, ""))
+									+ escapeHtml(getIfExistsStr(" (", newData.itype, ")"))
+									+ escapeHtml(getIfExistsStr(": ", newData.param, ""))
+									+ escapeHtml(getIfExistsStr(" (",lastTime.toFixed(1), "s ago)\n"))
+
+					if (lastTime > maxDeviceStatusTime) {
+						newStatusText = "<mark> " + newStatusText + " </mark>"
+					}
+
+					statusDataDiv.innerHTML = statusDataDiv.innerHTML + newStatusText
+
+					statusDataDiv.appendChild(document.createElement("br"));
+				}
+
+				// Other status DIV:
+				var statusInfoDiv = document.getElementById('statusInfo');
+				statusInfoDiv.innerHTML = "Last status update: "
+				if (lastStatusDataTime != null) {
+					timeFromLastUpdate = (d.getTime() - lastStatusDataTime)/1000
+					statusInfoDiv.innerHTML = statusInfoDiv.innerHTML + escapeHtml(timeFromLastUpdate.toFixed(1).toString()) + "s ago"
+
+					// If the last status time is very recent, color it green
+					if (timeFromLastUpdate < 2) {statusInfoDiv.style.color = "#38bc20";}
+					// If the last status time is less recent, color it yellow
+					else if (timeFromLastUpdate < 4) {statusInfoDiv.style.color = "#b9a21c";}
+					// If the last status time is old, color it red
+					else {statusInfoDiv.style.color = "#f23131";}
+				} else {
+					statusInfoDiv.innerHTML = statusInfoDiv.innerHTML + " null"
+					// Color the text black if it is null
+					statusInfoDiv.style.color = "#000000";
+				}
+			}, 1/30 * 1100);
+
+			setInterval(function(){
+				var joyUse = joystick.right() || joystick.up() || joystick.left() || joystick.down()
+
+				var xValue = (joyUse ? joystick.deltaX() : 0)
+				var yValue = (joyUse ? joystick.deltaY()*-1 : 0)
+
+				var outputEl	= document.getElementById('result');
+				outputEl.innerHTML	= '<b>Result:</b> '
+					+ ' dx:'+xValue/joyRadius
+					+ ' dy:'+yValue/joyRadius
+					+ (joystick.right()	? ' right'	: '')
+					+ (joystick.up()	? ' up'		: '')
+					+ (joystick.left()	? ' left'	: '')
+					+ (joystick.down()	? ' down' 	: '')
+			}, 1/30 * 1100);
+
+			setInterval(function(){
+				var joyUse = joystick.right() || joystick.up() || joystick.left() || joystick.down()
+				if (joyUse) {
+					socket.emit("input", {x: joystick.deltaX()/joyRadius, y: (joystick.deltaY()/joyRadius)*-1})
+				}
+				else {
+					socket.emit("input", {x: 0, y: 0})
+				}
+			}, 1/30 * 29000);
+		</script>
+	</body>
+</html>
