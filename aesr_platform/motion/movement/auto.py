@@ -65,10 +65,17 @@ class AutoCalc:
             raise ValueError("No Target")
             #return self.AutoData((0,0,0), None, )
 
-        curr_pos = self.pt.read_xy_pos()
+        try:
+            curr_pos = self.pt.read_xy_pos()
+        except:
+            curr_pos = (None, None)
         print("Cur pos: {}, target: {}".format(curr_pos, self.target))
 
-        a = self.ht.read_heading()
+        try:
+            a = self.ht.read_heading()
+        except:
+            return self.AutoData((0, 0, 0), False, curr_pos, None, mode="NOHEADING")
+
         a = ((a + 180) % 360) - 180  # Convert to [-180,180] range
         a *= math.pi / 180  # convert to radians now [-pi,pi] range
         print("Angle: {}".format(a))
