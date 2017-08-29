@@ -67,6 +67,10 @@ class ThrusterManager:
         for i, t in enumerate(self._ths):
             t.set_power(thrusts[i])
 
+    def disable_thrusters(self):
+        for t in self._ths:
+            t.set_power(0)
+
 
 class AutoThrustThreaded(Thread):
     def __init__(self, tm: ThrusterManager, ac: AutoCalc=None, rate: int=5, t_name: str=None):
