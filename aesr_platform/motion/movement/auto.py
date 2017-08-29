@@ -1,6 +1,8 @@
 import math
 import numpy as np
 
+from logging import Logger
+
 from typing import Union, Tuple
 
 from aesrdevicelib.base.navigation import PositionTransducer, HeadingTransducer
@@ -35,8 +37,9 @@ class AutoCalc:
             self.ang = ang
             self.mode = mode
 
-    def __init__(self, pt: PositionTransducer, ht: HeadingTransducer, max_d, target_r, hold_r, max_m, min_m=0,
+    def __init__(self, log: Logger, pt: PositionTransducer, ht: HeadingTransducer, max_d, target_r, hold_r, max_m, min_m=0,
                  rot_gain=1, diff_scale: Tuple[float, float] = (1,1), dynamic_scale: DynamicScaleDiff=None):
+        self.log = log
         self.pt = pt
         self.ht = ht
         self.scale = diff_scale
@@ -74,6 +77,7 @@ class AutoCalc:
         try:
             a = self.ht.read_heading()
         except:
+            self.log.exception("IMU READ FAILURE", extra={'atype': 'IMU', 'state': False})
             return self.AutoData((0, 0, 0), False, curr_pos, None, mode="NOHEADING")
 
         a = ((a + 180) % 360) - 180  # Convert to [-180,180] range
@@ -82,6 +86,7 @@ class AutoCalc:
 
         if curr_pos[0] is None or curr_pos[1] is None:
             print("NO GPS")
+            self.log.error("GPS READ FAILURE", extra={'atype': 'GPS', 'state': False})
             return self.AutoData((0, 0, 0), False, curr_pos, a, mode="NOGPS")
 
         if self.d_scale is not None:
