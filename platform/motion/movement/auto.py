@@ -15,6 +15,11 @@ class DynamicScaleDiff:
         raise NotImplementedError
 
 
+class GPSScaleDiff(DynamicScaleDiff):
+    def calc(self, t, cp):
+        return self._diff(t, cp)*np.array((math.cos(math.radians(cp[0])) * 111320., 110540.))
+
+
 class _Mode:
     REPOS = 1  # Repositioning
     HOLD = 2  # Holding (not driving)
