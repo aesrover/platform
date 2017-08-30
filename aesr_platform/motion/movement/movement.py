@@ -86,7 +86,7 @@ class AutoThrustThreaded(Thread):
         self.running = False
         self.man_t = (0,)*3  # Manual thrust
 
-        self.since_auto_log = None
+        self.since_log = None
         self.last_auto = False
 
     def start(self):
@@ -121,6 +121,11 @@ class AutoThrustThreaded(Thread):
             ts = time.time()
 
             tv = (0,)*3
+
+            curr_pos = None
+            curr_ang = None
+            mode = None
+            extra = {}
             if self.ac is not None and self.auto:
                 d = self.ac.calc()
                 tv = d.nav
@@ -129,22 +134,36 @@ class AutoThrustThreaded(Thread):
                     self.log.debug("Auto enabled", extra={'type': 'AUTO', 'itype': 'STATUS', 'status': True,
                                                           'mode': "AUTO"})
 
-                if self.since_auto_log is None or self.since_auto_log > 10:
-                    self.since_auto_log = 0
-                    self.log.debug("Auto status", extra={'type': 'AUTO', 'itype': 'DATA', 'mode': d.mode, 'nav': d.nav,
-                                                         'curr_pos': d.pos, 'curr_ang': d.ang, 'target': d.target})
-                else:
-                    self.since_auto_log += 1
+                # Set data for log:
+                curr_pos = d.pos
+                curr_ang = d.ang
+                mode = d.mode
+                extra['target'] = d.target
+                extra['dist'] = d.dist
+                extra['diff'] = d.diff
 
             elif self.man_t is not None:  # Manual
+                mode = "MANUAL"
                 if self.last_auto:
                     self.last_auto = False
                     self.log.debug("Auto disabled", extra={'type': 'AUTO', 'itype': 'STATUS', 'status': False,
                                                            'mode': "MANUAL"})
-
                 tv = self.man_t
+
+            if self.since_log is None or self.since_log > 10:
+                if curr_pos is None:
+                    curr_pos = self.ac.read_pt()
+                if curr_ang is None:
+                    curr_ang = self.ac.read_ht()
+
+                self.since_log = 0
+
+                data = {'type': 'AUTO', 'itype': 'DATA', 'mode': mode, 'tv': tv,
+                        'curr_pos': curr_pos, 'curr_ang': curr_ang}
+                data.update(**extra)
+                self.log.debug("Auto Data", extra=data)
             else:
-                print("No manual value")
+                self.since_log += 1
 
             self.tm.set_thrust(*tv)
 
