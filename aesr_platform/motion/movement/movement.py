@@ -126,19 +126,21 @@ class AutoThrustThreaded(Thread):
                 tv = d.nav
                 if not self.last_auto:
                     self.last_auto = True
-                    self.log.debug("Auto enabled", extra={'type': 'AUTO', 'status': True})
+                    self.log.debug("Auto enabled", extra={'type': 'AUTO', 'itype': 'STATUS', 'status': True,
+                                                          'mode': "AUTO"})
 
                 if self.since_auto_log is None or self.since_auto_log > 10:
                     self.since_auto_log = 0
-                    self.log.debug("Auto status", extra={'type': 'AUTO', 'mode': d.mode, 'nav': d.nav,
-                                                         'curr_pos': d.pos, 'curr_ang': d.ang})
+                    self.log.debug("Auto status", extra={'type': 'AUTO', 'itype': 'DATA', 'mode': d.mode, 'nav': d.nav,
+                                                         'curr_pos': d.pos, 'curr_ang': d.ang, 'target': d.target})
                 else:
                     self.since_auto_log += 1
 
             elif self.man_t is not None:  # Manual
                 if self.last_auto:
                     self.last_auto = False
-                    self.log.debug("Auto disabled", extra={'type': 'AUTO', 'status': False, 'mode': "MANUAL"})
+                    self.log.debug("Auto disabled", extra={'type': 'AUTO', 'itype': 'STATUS', 'status': False,
+                                                           'mode': "MANUAL"})
 
                 tv = self.man_t
             else:
