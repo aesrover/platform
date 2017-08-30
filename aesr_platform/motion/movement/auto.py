@@ -30,12 +30,13 @@ class _Mode:
 class AutoCalc:
     class AutoData:
         def __init__(self, nav: Tuple[float,float,float], state: Union[None, bool], pos: Tuple[float, float],
-                     ang: float, mode: str):
+                     ang: float, mode: str, target: Tuple[float, float]):
             self.nav = nav
             self.state = state
             self.pos = pos
             self.ang = ang
             self.mode = mode
+            self.target = target
 
     def __init__(self, log: Logger, pt: PositionTransducer, ht: HeadingTransducer, max_d, target_r, hold_r, max_m, min_m=0,
                  rot_gain=1, diff_scale: Tuple[float, float] = (1,1), dynamic_scale: DynamicScaleDiff=None):
@@ -78,7 +79,7 @@ class AutoCalc:
             a = self.ht.read_heading()
         except:
             self.log.exception("IMU READ FAILURE", extra={'atype': 'IMU', 'state': False})
-            return self.AutoData((0, 0, 0), False, curr_pos, None, mode="NOHEADING")
+            return self.AutoData((0, 0, 0), False, curr_pos, None, "NOHEADING", self.target)
 
         a = ((a + 180) % 360) - 180  # Convert to [-180,180] range
         a *= math.pi / 180  # convert to radians now [-pi,pi] range
@@ -87,7 +88,7 @@ class AutoCalc:
         if curr_pos[0] is None or curr_pos[1] is None:
             print("NO GPS")
             self.log.error("GPS READ FAILURE", extra={'atype': 'GPS', 'state': False})
-            return self.AutoData((0, 0, 0), False, curr_pos, a, mode="NOGPS")
+            return self.AutoData((0, 0, 0), False, curr_pos, a, "NOGPS", self.target)
 
         if self.d_scale is not None:
             pd_dir: np.ndarray = self.d_scale.calc(self.target, curr_pos)
@@ -121,7 +122,7 @@ class AutoCalc:
 
         # If in hold mode, return no thrust:
         if self.mode == _Mode.HOLD:
-            return self.AutoData((0, 0, 0), True, curr_pos, a, mode="HOLD")
+            return self.AutoData((0, 0, 0), True, curr_pos, a, "HOLD", self.target)
 
         # Calculate scaled angle influence for thruster:
         a_r = a/math.pi
@@ -136,4 +137,4 @@ class AutoCalc:
         rotv = rot_mat.dot(pd_scaled)
         print("Rotated vector: {}".format(rotv))
 
-        return self.AutoData((rotv[0, 0], rotv[0, 1], a_r), False, curr_pos, a, mode="REPOS")
+        return self.AutoData((rotv[0, 0], rotv[0, 1], a_r), False, curr_pos, a, "REPOS", self.target)
