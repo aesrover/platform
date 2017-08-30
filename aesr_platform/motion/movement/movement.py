@@ -84,7 +84,7 @@ class AutoThrustThreaded(Thread):
         self.auto = False
 
         self.running = False
-        self.man_t = None  # Manual thrust
+        self.man_t = (0,)*3  # Manual thrust
 
         self.since_auto_log = None
         self.last_auto = False
