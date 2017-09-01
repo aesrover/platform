@@ -6,7 +6,7 @@ import time
 from typing import List
 from aesrdevicelib.base.transducer import Transducer
 
-from .data import DataHandler
+from aesrdatabaselib.base.data import DataHandler
 
 
 class Store:

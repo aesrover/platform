@@ -1,1 +1,2 @@
 git+git://github.com/aesrover/python-aesrdevicelib.git@v2.0
+git+git://github.com/aesrover/python-aesrdatabaselib.git@v2.0
