@@ -117,11 +117,11 @@ class AutoCalc:
 
         # Calculate scaled angle influence for thruster:
         a_r = a/math.pi
-        a_r *= self.rot_g
+        a_r *= -self.rot_g
 
         # Calculate rotation matrix:
-        s = math.sin(a)
-        c = math.cos(a)
+        s = math.sin(-a)
+        c = math.cos(-a)
         rot_mat = np.mat([[c, -s], [s, c]])
 
         # Calculate rotated x,y vector:
@@ -138,6 +138,7 @@ class AutoCalc:
             return None
         a = ((a + 180) % 360) - 180  # Convert to [-180,180] range
         a *= math.pi / 180  # convert to radians now [-pi,pi] range
+        a *= -1  # Flip angle (increases with counter clockwise rotation)
         return a
 
     def read_pt(self):
