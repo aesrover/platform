@@ -66,8 +66,16 @@ class ThrusterManager:
         :return: None
         """
         thrusts = self.coeff_inv * np.array([[vx], [vy], [vr]])
+
+        # Scale all if above one:
+        if len(thrusts) > 0:
+            max_t = abs(max(thrusts.max(), thrusts.min(), key=abs))
+            if max_t > 1:
+                thrusts /= max_t
+
         for i, t in enumerate(self._ths):
-            t.set_power(thrusts[i])
+            p = thrusts[i]
+            t.set_power(p)
 
     def disable_thrusters(self):
         for t in self._ths:
