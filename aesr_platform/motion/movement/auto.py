@@ -72,15 +72,7 @@ class AutoCalc:
         curr_pos = self.read_pt()
         print("Cur pos: {}, target: {}".format(curr_pos, self.target))
 
-        try:
-            a = self.ht.read_heading()
-        except:
-            self.log.exception("IMU READ FAILURE", extra={'atype': 'IMU', 'state': False})
-            return self.AutoData((0, 0, 0), False, curr_pos, None, "NOHEADING", self.target)
-
-        a = ((a + 180) % 360) - 180  # Convert to [-180,180] range
-        a *= math.pi / 180  # convert to radians now [-pi,pi] range
-        print("Angle: {}".format(a))
+        a = self.read_ht()
 
         if curr_pos[0] is None or curr_pos[1] is None:
             print("NO GPS")
@@ -109,6 +101,9 @@ class AutoCalc:
         dist = math.hypot(pd_dir[0], pd_dir[1])
         print("Dist: {}".format(dist))
 
+        if a is None:
+            return self.AutoData((0, 0, 0), False, curr_pos, None, "NOHEADING", self.target)
+
         # Check if inside target area in repositioning mode
         if self.mode == _Mode.REPOS and dist < self.target_r:
             self.mode = _Mode.HOLD
@@ -134,6 +129,16 @@ class AutoCalc:
         print("Rotated vector: {}".format(rotv))
 
         return self.AutoData((rotv[0, 0], rotv[0, 1], a_r), False, curr_pos, a, "REPOS", self.target)
+
+    def read_ht(self):
+        try:
+            a = self.ht.read_heading()
+        except:
+            self.log.exception("IMU READ FAILURE", extra={'atype': 'IMU', 'state': False})
+            return None
+        a = ((a + 180) % 360) - 180  # Convert to [-180,180] range
+        a *= math.pi / 180  # convert to radians now [-pi,pi] range
+        return a
 
     def read_pt(self):
         try:
