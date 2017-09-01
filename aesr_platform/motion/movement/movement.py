@@ -7,6 +7,7 @@ from aesrdevicelib.base.motor import Thruster
 
 from threading import Thread
 from aesrdevicelib.base.motor import Thruster
+from aesrdatabaselib.base.waypoint import WaypointManager
 
 # Local:
 from .auto import AutoCalc
@@ -74,12 +75,15 @@ class ThrusterManager:
 
 
 class AutoThrustThreaded(Thread):
-    def __init__(self, log: Logger, tm: ThrusterManager, ac: AutoCalc=None, rate: int=5, t_name: str=None):
+    def __init__(self, log: Logger, tm: ThrusterManager, ac: AutoCalc=None, wpm: WaypointManager=None, rate: int=5,
+                 t_name: str=None):
         super().__init__(name=t_name)
         self.log = log
         self.tm = tm
         self.ac = ac
         self.rt = 1./rate  # Calculate run time
+
+        self.wpm = wpm
 
         self.auto = False
 
@@ -112,6 +116,12 @@ class AutoThrustThreaded(Thread):
     def set_auto_target(self, t: Tuple[float, float]):
         self.__auto_calc()
         self.ac.set_target(t)
+
+    def next_auto_target(self):
+        if self.wpm is None:
+            raise ValueError("No waypoint manager!")
+        self.__auto_calc()
+        self.set_auto_target(self.wpm.select_next_wp())
 
     def set_thrust(self, vx, vy, vr):
         self.man_t = (vx, vy, vr)
