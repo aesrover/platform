@@ -37,7 +37,7 @@ class StoreThreaded(Store, Thread):
         while self.running:
             t = time.time()
             self.store()
-            while not (time.time()-t) < self.store_delay:
+            while (time.time()-t) < self.store_delay:
                 time.sleep(0.01)
 
     def close(self):
