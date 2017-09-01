@@ -69,10 +69,7 @@ class AutoCalc:
             raise ValueError("No Target")
             #return self.AutoData((0,0,0), None, )
 
-        try:
-            curr_pos = self.pt.read_xy_pos()
-        except:
-            curr_pos = (None, None)
+        curr_pos = self.read_pt()
         print("Cur pos: {}, target: {}".format(curr_pos, self.target))
 
         try:
@@ -87,7 +84,6 @@ class AutoCalc:
 
         if curr_pos[0] is None or curr_pos[1] is None:
             print("NO GPS")
-            self.log.error("GPS READ FAILURE", extra={'atype': 'GPS', 'state': False})
             return self.AutoData((0, 0, 0), False, curr_pos, a, "NOGPS", self.target)
 
         if self.d_scale is not None:
@@ -138,3 +134,10 @@ class AutoCalc:
         print("Rotated vector: {}".format(rotv))
 
         return self.AutoData((rotv[0, 0], rotv[0, 1], a_r), False, curr_pos, a, "REPOS", self.target)
+
+    def read_pt(self):
+        try:
+            return self.pt.read_xy_pos()
+        except:
+            self.log.error("GPS READ FAILURE", extra={'atype': 'GPS', 'state': False})
+            return None, None
