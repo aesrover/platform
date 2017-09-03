@@ -1,3 +1,4 @@
+import logging
 import matplotlib.pyplot as plt
 import math
 import random
@@ -51,6 +52,9 @@ class FakeThruster(Thruster):
     def _set_motor_power(self, p: float):
         print("T{} Power: {}".format(self.num, p))
 
+log = logging.getLogger('AESR_p')
+log.setLevel(logging.DEBUG)
+log.addHandler(logging.StreamHandler())  # Prints to console
 
 FPS_SCALE = 1/10
 LIN_GAIN = 10
@@ -71,7 +75,7 @@ if __name__ == "__main__":
     pt.set_position(10,10)
     ht = TestHT()
     ht.set_heading(90)
-    ac = AutoCalc(pt, ht, 10, 1, 5, 0.2, min_m=0.01, rot_gain=0.5)
+    ac = AutoCalc(log, pt, ht, 10, 1, 5, 0.2, min_m=0.01, rot_gain=0.5)
 
     t_i = -1
 
