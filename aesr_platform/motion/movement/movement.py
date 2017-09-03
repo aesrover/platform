@@ -183,7 +183,10 @@ class AutoThrustThreaded(Thread):
             else:
                 self.since_log += 1
 
-            self.tm.set_thrust(*tv)
+            try:
+               self.tm.set_thrust(*tv)
+            except:
+                self.log.critical("THRUSTER SET FAILED", extra={'type': "THRUSTER", 'state': False})
 
             if (time.time()-ts) > self.rt:  # Detect
                 print("{} dragging".format(self.getName()))
