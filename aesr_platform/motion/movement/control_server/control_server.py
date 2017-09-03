@@ -12,8 +12,6 @@ print("\nImports successfully completed\n")
 
 WEBSERVER_FOLDER_NAME = "motorwebserver"
 
-WPS = [(0,0)]
-
 
 def normalize_motor_power(power):
     max_ = 10
@@ -85,9 +83,9 @@ class ControlServer(SocketIO):
         print("Client Connect")
 
     def set_auto_state(self, data):
-        if data['state'] == 1 and len(WPS)>0:
+        if data['state'] == 1 and len(self.att.wpm.get_wps()) > 0:
             #  GET NEW TARGET
-            self.att.set_auto_target(WPS.pop(0))
+            self.att.next_auto_target()
             self.att.set_auto_state(True)
         elif data['state'] == 0:
             self.att.set_auto_state(False)
@@ -109,7 +107,7 @@ class ControlServer(SocketIO):
             emit("status", self.get_status_data())
 
     def req_auto_state(self, data):
-        d = {'state': self.att.auto, 'remaining': len(WPS)}
+        d = {'state': self.att.auto, 'remaining': len(self.att.wpm.get_wps())}
         emit("auto_status", d)
 
     def poll(self, data):
