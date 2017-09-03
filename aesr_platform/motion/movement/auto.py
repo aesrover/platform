@@ -72,7 +72,6 @@ class AutoCalc:
             #return self.AutoData((0,0,0), None, )
 
         curr_pos = self.read_pt()
-        print("Cur pos: {}, target: {}".format(curr_pos, self.target))
 
         a = self.read_ht()
 
@@ -88,22 +87,17 @@ class AutoCalc:
                 v = math.copysign(1, v)
             v *= (self.max_m-self.min_m)
             v += self.min_m * math.copysign(1, v)
-            print("V: {}".format(v))
             pd_scaled.append(v)
 
         pd_scaled = np.array(pd_scaled)
 
-        print("Diffs: {}".format(pd_scaled))
-
         # Calculate distance from target:
         dist = math.hypot(pd_dir[0], pd_dir[1])
-        print("Dist: {}".format(dist))
 
         if a is None:
             return self.AutoData((0, 0, 0), False, curr_pos, None, "NOHEADING", self.target, dist, tuple(pd_dir))
 
         if curr_pos[0] is None or curr_pos[1] is None:
-            #print("NO GPS")
             return self.AutoData((0, 0, 0), False, curr_pos, a, "NOGPS", self.target, dist, tuple(pd_dir))
 
 
@@ -129,7 +123,6 @@ class AutoCalc:
 
         # Calculate rotated x,y vector:
         rotv = rot_mat.dot(pd_scaled)
-        print("Rotated vector: {}".format(rotv))
 
         return self.AutoData((rotv[0, 0], rotv[0, 1], a_r), False, curr_pos, a, "REPOS", self.target, dist, tuple(pd_dir))
 
