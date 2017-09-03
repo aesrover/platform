@@ -19,7 +19,7 @@ class Store:
         data = []
         for t in self.transducers:
             try:
-                d = t.read()
+                d = t.read_full()
             except:
                 self.log.exception(t._add_transducer_info({'state': False}))
             else:
