@@ -100,7 +100,7 @@ class ControlServer(SocketIO):
 
         print("[Joystic Update] Joy X: {} | Joy Y: {}".format(x_value, y_value))
 
-        self.att.set_thrust(0, y_value, -x_value)  # TODO: REMOVE WIERD GAIN THINGY
+        self.att.set_thrust(0, y_value*2, -x_value)
 
         # Emit status data if collection was supplied:
         if self.db_col is not None:
