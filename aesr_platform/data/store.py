@@ -23,6 +23,7 @@ class Store:
             except:
                 self.log.exception(t._add_transducer_info({'state': False}))
             else:
+                d['ts'] = time.time()
                 data.append(d)
         self.handler.store_many(data)
 
