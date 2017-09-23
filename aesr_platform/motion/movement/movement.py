@@ -168,20 +168,21 @@ class AutoThrustThreaded(Thread):
                                                            'mode': "MANUAL"})
                 tv = self.man_t
 
-            if self.since_log is None or self.since_log > 10:
-                if curr_pos is None:
-                    curr_pos = self.ac.read_pt()
-                if curr_ang is None:
-                    curr_ang = self.ac.read_ht()
+            if self.ac is not None:
+                if self.since_log is None or self.since_log > 10:
+                    if curr_pos is None:
+                        curr_pos = self.ac.read_pt()
+                    if curr_ang is None:
+                        curr_ang = self.ac.read_ht()
 
-                self.since_log = 0
+                    self.since_log = 0
 
-                data = {'type': 'AUTO', 'itype': 'DATA', 'mode': mode, 'tv': tv,
-                        'curr_pos': curr_pos, 'curr_ang': curr_ang}
-                data.update(**extra)
-                self.log.debug("Auto Data", extra=data)
-            else:
-                self.since_log += 1
+                    data = {'type': 'AUTO', 'itype': 'DATA', 'mode': mode, 'tv': tv,
+                            'curr_pos': curr_pos, 'curr_ang': curr_ang}
+                    data.update(**extra)
+                    self.log.debug("Auto Data", extra=data)
+                else:
+                    self.since_log += 1
 
             try:
                self.tm.set_thrust(*tv)
