@@ -83,6 +83,8 @@ class ControlServer(SocketIO):
         print("Client Connect")
 
     def set_auto_state(self, data):
+        if self.att.wpm is None:
+            return
         if data['state'] == 1 and len(self.att.wpm.get_wps()) > 0:
             #  GET NEW TARGET
             self.att.next_auto_target()
@@ -107,7 +109,11 @@ class ControlServer(SocketIO):
             emit("status", self.get_status_data())
 
     def req_auto_state(self, data):
-        d = {'state': self.att.auto, 'remaining': len(self.att.wpm.get_wps())}
+        if self.att.wpm is not None:
+            num_wps = len(self.att.wpm.get_wps())
+        else:
+            num_wps = 'None'
+        d = {'state': self.att.auto, 'remaining': num_wps}
         emit("auto_status", d)
 
     def poll(self, data):
