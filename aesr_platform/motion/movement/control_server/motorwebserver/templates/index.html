@@ -1,4 +1,9 @@
 <html>
+	<!--
+		170924 Added buttons for up and down on the spool
+
+
+	-->
 	<head>
 		<link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
 		<meta charset="utf-8">
@@ -42,11 +47,63 @@
 			overflow:auto;
 			white-space: nowrap;
 		}
+        #depthControlUp {
+			position	: absolute;
+			bottom      : 150px;
+			right		: 0px;
+			width		: 100px;
+			height		: 75px;
+			padding		: 5px;
+			text-align	: center;
+			background-color: #FF0000;
+			max-height: 100%;
+			overflow:auto;
+			white-space: nowrap;
+		}
+        #depthControlDown {
+			position	: absolute;
+			bottom      : 75px;
+			right		: 0px;
+			width		: 100px;
+			height		: 75px;
+			padding		: 5px;
+			text-align	: center;
+			background-color: #0000FF;
+			max-height: 100%;
+			overflow:auto;
+			white-space: nowrap;
+		}
+        #depthControlUpFrac {
+			position	: absolute;
+			bottom      : 150px;
+			right		: 100px;
+			width		: 100px;
+			height		: 75px;
+			padding		: 5px;
+			text-align	: center;
+			background-color: #FFA0A0;
+			max-height: 100%;
+			overflow:auto;
+			white-space: nowrap;
+		}
+        #depthControlDownFrac {
+			position	: absolute;
+			bottom      : 75px;
+			right		: 100px;
+			width		: 100px;
+			height		: 75px;
+			padding		: 5px;
+			text-align	: center;
+			background-color: #A0A0FF;
+			max-height: 100%;
+			overflow:auto;
+			white-space: nowrap;
+		}
         #autoControl {
 			position	: absolute;
 			bottom      : 0px;
 			right		: 0px;
-			width		: 25%;
+			width		: 250px;
 			padding		: 5px;
 			text-align	: center;
 			background-color: #D5CFCD;
@@ -67,6 +124,7 @@
 	</head>
 	<body>
 		<div id="container"></div>
+
 		<div id="info">
 			AESR
 			<br/>
@@ -74,15 +132,41 @@
 			-
 			works with mouse too
 			<br/>
-		<div id="statusInfo">OTHER STATUS<br/></div>
-		<div id="statusData">STATUS (NEW->OLD)<br/></div>
-		<span id="result"></span>
+
+			<div id="statusInfo">OTHER STATUS<br/></div>
+
+			<div id="statusData">STATUS (NEW->OLD)<br/></div>
+
+			<span id="result"></span>
 		</div>
+
+        <div id="depthControlUp">
+            <div id="depthStatus">Up +1.0</div><br/>
+            <input id="autotog" type="button" value="  AAA  " onclick="switchDepthState();" /><br/>
+        </div>
+
+        <div id="depthControlDown">
+            <div id="depthStatus">Down -1.0</div><br/>
+            <input id="autotog" type="button" value="  VVV  " onclick="switchDepthState();" /><br/>
+        </div>
+
+        <div id="depthControlUpFrac">
+            <div id="depthStatus">Up +0.1</div><br/>
+            <input id="autotog" type="button" value="     A     " onclick="switchDepthState();" /><br/>
+        </div>
+
+        <div id="depthControlDownFrac">
+            <div id="depthStatus">Down -0.1</div><br/>
+            <input id="autotog" type="button" value="     V     " onclick="switchDepthState();" /><br/>
+        </div>
+
         <div id="autoControl">
             <div id="autoStatus">Auto: Disabled</div><br/>
             <input id="autotog" type="button" value="Auto Toggle" onclick="switchAutoState();" /><br/>
         </div>
+
 		<script type="text/javascript" src="/static/scripts/virtualjoystick.js"></script>
+
 		<script type="text/javascript" src="/static/scripts/socket.io-1.4.5.js"></script>
 		<script>
 			function escapeHtml(unsafe) {
@@ -224,8 +308,8 @@
 
 				var outputEl	= document.getElementById('result');
 				outputEl.innerHTML	= '<b>Result:</b> '
-					+ ' dx:'+xValue/joyRadius
-					+ ' dy:'+yValue/joyRadius
+					+ ' dx:' + (xValue/joyRadius).toFixed(2)
+					+ ' dy:' + (yValue/joyRadius).toFixed(2)
 					+ (joystick.right()	? ' right'	: '')
 					+ (joystick.up()	? ' up'		: '')
 					+ (joystick.left()	? ' left'	: '')

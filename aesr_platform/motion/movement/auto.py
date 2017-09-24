@@ -42,6 +42,18 @@ class AutoCalc:
 
     def __init__(self, log: Logger, pt: PositionTransducer, ht: HeadingTransducer, max_d, target_r, hold_r, max_m, min_m=0,
                  rot_gain=1, diff_scale: Tuple[float, float] = (1,1), dynamic_scale: DynamicScaleDiff=None):
+        """
+        :param pt: PositionTransducer used for distance/translation
+        :param ht: HeadingTransducer used for current angle
+        :param max_d: Maximum distance to begin scaling thruster power
+        :param target_r: Initial hold shutdown distance
+        :param hold_r: Distance before re-engaging thrusters for repositioning
+        :param max_m: Max motor power
+        :param min_m: Minimum motor power
+        :param rot_gain: Rotation influence gain
+        :param diff_scale: X,Y distance scaling (after calculating difference to target)
+        :param dynamic_scale: DynamicScaleDiff to dynamically scale X,Y distance (example: lon/lat to x/y meters)
+        """
         self.log = log
         self.pt = pt
         self.ht = ht

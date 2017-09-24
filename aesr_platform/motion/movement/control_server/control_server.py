@@ -96,11 +96,11 @@ class ControlServer(SocketIO):
     # "up", "down", "left", or "right" to stop when finger is lifted off
     def input_control(self, data):
         # target_bearing = 10
-        gain = 1  # 32767/80
-        x_value = data['x']*gain
-        y_value = data['y']*gain
+        gain = 1.  # 32767/80 # Make sure this is a float
+        x_value = data['x'] * gain
+        y_value = data['y'] * gain
 
-        print("[Joystic Update] Joy X: {} | Joy Y: {}".format(x_value, y_value))
+        print("[Joystic Update] Joy X: {:5.2f} | Joy Y: {:5.2f}".format( x_value , y_value ))
 
         self.att.set_thrust(0, y_value*2, -x_value)
 
