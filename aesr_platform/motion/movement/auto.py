@@ -68,18 +68,8 @@ class AutoCalc:
 
         self.mode = _Mode.REPOS
 
-        self.target: Tuple[float, float] = None
-
-    #def _pos_diff(self, target: Tuple[float, float]):
-    #    curr_pos = self.pt.read_xy_pos()
-    #    return tuple(np.subtract(target, curr_pos))
-
-    def set_target(self, t: Tuple[float, float]):
-        self.target = t
-        self.mode = _Mode.REPOS  # Ensure repositioning is enabled
-
-    def calc(self) -> AutoData:
-        if self.target is None:
+    def calc(self, t: Tuple[float, float]) -> AutoData:
+        if t is None:
             raise ValueError("No Target")
             #return self.AutoData((0,0,0), None, )
 
@@ -88,9 +78,9 @@ class AutoCalc:
         a = self.read_ht()
 
         if self.d_scale is not None:
-            pd_dir: np.ndarray = self.d_scale.calc(self.target, curr_pos)
+            pd_dir: np.ndarray = self.d_scale.calc(t, curr_pos)
         else:
-            pd_dir: np.ndarray = np.multiply(self.scale, tuple(np.subtract(self.target, curr_pos)))
+            pd_dir: np.ndarray = np.multiply(self.scale, tuple(np.subtract(t, curr_pos)))
 
         pd_scaled = []
         for i, v in np.ndenumerate(pd_dir):
@@ -107,10 +97,10 @@ class AutoCalc:
         dist = math.hypot(pd_dir[0], pd_dir[1])
 
         if a is None:
-            return self.AutoData((0, 0, 0), False, curr_pos, None, "NOHEADING", self.target, dist, tuple(pd_dir))
+            return self.AutoData((0, 0, 0), False, curr_pos, None, "NOHEADING", t, dist, tuple(pd_dir))
 
         if curr_pos[0] is None or curr_pos[1] is None:
-            return self.AutoData((0, 0, 0), False, curr_pos, a, "NOGPS", self.target, dist, tuple(pd_dir))
+            return self.AutoData((0, 0, 0), False, curr_pos, a, "NOGPS", t, dist, tuple(pd_dir))
 
 
         # Check if inside target area in repositioning mode
@@ -122,7 +112,7 @@ class AutoCalc:
 
         # If in hold mode, return no thrust:
         if self.mode == _Mode.HOLD:
-            return self.AutoData((0, 0, 0), True, curr_pos, a, "HOLD", self.target, dist, tuple(pd_dir))
+            return self.AutoData((0, 0, 0), True, curr_pos, a, "HOLD", t, dist, tuple(pd_dir))
 
         # Calculate scaled angle influence for thruster:
         a_r = a/math.pi
@@ -136,7 +126,7 @@ class AutoCalc:
         # Calculate rotated x,y vector:
         rotv = rot_mat.dot(pd_scaled)
 
-        return self.AutoData((rotv[0, 0], rotv[0, 1], a_r), False, curr_pos, a, "REPOS", self.target, dist, tuple(pd_dir))
+        return self.AutoData((rotv[0, 0], rotv[0, 1], a_r), False, curr_pos, a, "REPOS", t, dist, tuple(pd_dir))
 
     def read_ht(self):
         try:
