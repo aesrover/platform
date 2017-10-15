@@ -1,4 +1,4 @@
-git+git://github.com/aesrover/python-aesrdevicelib.git@v3.1.2
+git+git://github.com/aesrover/python-aesrdevicelib.git@v3.1.3
 git+git://github.com/aesrover/python-aesrdatabaselib.git@v2.1
 Flask-SocketIO
 Flask
