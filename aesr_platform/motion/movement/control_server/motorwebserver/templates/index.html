@@ -154,8 +154,8 @@
 
 		<!-- Depth Control-->
 		<div id="depthInfo">
-            <div id="currentDepth">None</div><br/>
-			<div id="currentDepthStatus">None</div><br/>
+            <div id="currentDepthStatus">None</div><br/>
+			<input id="depthReset" type="button" value="reset depth" onclick="resetDepth();" /><br/>
         </div>
 
         <div id="depthControlUp">
@@ -350,6 +350,10 @@
 				socket.emit("move_depth_ticks", {ticks: ticks});
             }
 
+            function resetDepth() {
+				socket.emit('reset_depth');
+            }
+
             // Depth Position Update Request:
 			setInterval(function(){
 				socket.emit("get_depth_status", {});
@@ -360,14 +364,16 @@
 				var curr_pos = data["curr_pos"];
 
 				// Update if depth moving:
-				document.getElementById("currentDepthStatus").innerHTML = "Moving: " + is_moving.toString();
+
 
 				// Add star to indicate incorrect number due to movement:
 				var depthAdd = is_moving ? "*" : "";
 
-				// Update current depth:
-				document.getElementById("currentDepth").innerHTML = ("Current Depth" + depthAdd + ": "
-					+ curr_pos.toFixed(2).toString());
+				// Update current depth and moving status:
+				document.getElementById("currentDepthStatus").innerHTML = (
+				    "Moving: " + is_moving.toString() + "<br\>" + "Current Depth" + depthAdd + ": "
+					+ curr_pos.toFixed(2).toString()
+				);
 			});
 		</script>
 	</body>
