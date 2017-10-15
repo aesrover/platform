@@ -52,6 +52,7 @@ class ControlServer(SocketIO):
         self.move_depth_ticks = self.on('move_depth_ticks')(self.move_depth_ticks)
         self.get_depth_status = self.on('get_depth_status')(self.get_depth_status)
         self.reset_depth = self.on("reset_depth")(self.reset_depth)
+        self.stop_depth = self.on("stop_depth")(self.stop_depth)
 
     def run_server(self, **kwargs):
         # Start motor drive thread:
@@ -132,6 +133,10 @@ class ControlServer(SocketIO):
     def reset_depth(self):
         """ SocketIO event catch for depth tick reset """
         self.att.ws.depth_m.curr_tick = 0
+
+    def stop_depth(self):
+        """ SocketIO event catch to stop depth """
+        self.att.ws.depth_m.stop()
 
     def poll(self, data):
         self.lastConnectTime = time.time()

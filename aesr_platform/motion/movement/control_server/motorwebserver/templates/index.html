@@ -154,8 +154,9 @@
 
 		<!-- Depth Control-->
 		<div id="depthInfo">
+			<input id="depthReset" type="button" value="Reset Depth" onclick="resetDepth();" /><br/>
             <div id="currentDepthStatus">None</div><br/>
-			<input id="depthReset" type="button" value="reset depth" onclick="resetDepth();" /><br/>
+			<input id="depthStop" type="button" value="STOP DEPTH" onclick="stopDepth();" /><br/>
         </div>
 
         <div id="depthControlUp">
@@ -353,6 +354,10 @@
             function resetDepth() {
 				socket.emit('reset_depth');
             }
+
+            function stopDepth() {
+			    socket.emit('stop_depth');
+			}
 
             // Depth Position Update Request:
 			setInterval(function(){
