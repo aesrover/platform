@@ -36,10 +36,10 @@ class WaypointSelector(Thread):
                 depth = self.get_current_wp()['depth']
 
                 # Move to desired depth:
-                self.depth_m.move_abs_tick(depth)
+                self.depth_m.move_abs_tick(depth, t=True)
 
                 ts = time.time()
-                while (time.time() + ts) < wait and self._get_auto():
+                while (time.time() - ts) < wait and self._get_auto():
                     time.sleep(0.05)
 
                 # Get next:
@@ -48,7 +48,7 @@ class WaypointSelector(Thread):
                 if new_wp is not None:
                     # Move back to starting position if moving to new position for next waypoint
                     if not self.last_wp['pos'] == new_wp['pos']:
-                        self.depth_m.move_abs_tick(0)
+                        self.depth_m.move_abs_tick(0, t=True)
 
                 self.on_target = False
             time.sleep(0.5)
@@ -67,7 +67,7 @@ class WaypointSelector(Thread):
     def get_current_wp(self):
         return self.wpm.get_curr_wp()
 
-    def set_auto(self, state: Union[bool, Callable[bool]]):
+    def set_auto(self, state: Union[bool, Callable[[], bool]]):
         self.is_auto = state
 
     def _get_auto(self):
