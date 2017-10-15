@@ -1,2 +1,8 @@
 git+git://github.com/aesrover/python-aesrdevicelib.git@v2.0
 git+git://github.com/aesrover/python-aesrdatabaselib.git@v2.0
+Flask-SocketIO
+Flask
+numpy
+log4mongo
+gevent
+gevent-websocket
