@@ -1,6 +1,6 @@
 <html>
 	<!--
-		170924 Added buttons for up and down on the spool
+		170924 Added buttons for up and down for depth control
 
 
 	-->
@@ -111,6 +111,18 @@
 			overflow:auto;
 			white-space: nowrap;
 		}
+		#depthInfo {
+			position	: absolute;
+			bottom      : 240px;
+			right		: 0px;
+			width		: 200px;
+			padding		: 5px;
+			text-align	: center;
+			background-color: #D5CFCD;
+			max-height: 100%;
+			overflow:auto;
+			white-space: nowrap;
+		}
 		#container {
 			width		: 100%;
 			height		: 100%;
@@ -140,24 +152,30 @@
 			<span id="result"></span>
 		</div>
 
+		<!-- Depth Control-->
+		<div id="depthInfo">
+            <div id="currentDepth">None</div><br/>
+			<div id="currentDepthStatus">None</div><br/>
+        </div>
+
         <div id="depthControlUp">
-            <div id="depthStatus">Up +1.0</div><br/>
-            <input id="autotog" type="button" value="  AAA  " onclick="switchDepthState();" /><br/>
+            <div class="depthStatus">Up +3.0</div><br/>
+            <input class="depthTog" type="button" value="  AAA  " onclick="switchDepthState(3);" /><br/>
         </div>
 
         <div id="depthControlDown">
-            <div id="depthStatus">Down -1.0</div><br/>
-            <input id="autotog" type="button" value="  VVV  " onclick="switchDepthState();" /><br/>
+            <div class="depthStatus">Down -3.0</div><br/>
+            <input class="depthTog" type="button" value="  VVV  " onclick="switchDepthState(-3);" /><br/>
         </div>
 
         <div id="depthControlUpFrac">
-            <div id="depthStatus">Up +0.1</div><br/>
-            <input id="autotog" type="button" value="     A     " onclick="switchDepthState();" /><br/>
+            <div class="depthStatus">Up +1.0</div><br/>
+            <input class="depthTog" type="button" value="     A     " onclick="switchDepthState(1);" /><br/>
         </div>
 
         <div id="depthControlDownFrac">
-            <div id="depthStatus">Down -0.1</div><br/>
-            <input id="autotog" type="button" value="     V     " onclick="switchDepthState();" /><br/>
+            <div class="depthStatus">Down -1.0</div><br/>
+            <input class="depthTog" type="button" value="     V     " onclick="switchDepthState(-1);" /><br/>
         </div>
 
         <div id="autoControl">
@@ -325,6 +343,32 @@
 					socket.emit("input", {x: 0, y: 0})
 				}
 			}, 1/30 * 29000);
+
+
+			// Depth Control:
+			function switchDepthState(ticks) {
+				socket.emit("move_depth_ticks", {ticks: ticks});
+            }
+
+            // Depth Position Update Request:
+			setInterval(function(){
+				socket.emit("get_depth_status", {});
+			}, 1/30 * 29000);
+
+			socket.on('depth_status', function (data) {
+				var is_moving = data["is_moving"];
+				var curr_pos = data["curr_pos"];
+
+				// Update if depth moving:
+				document.getElementById("currentDepthStatus").innerHTML = "Moving: " + is_moving.toString();
+
+				// Add star to indicate incorrect number due to movement:
+				var depthAdd = is_moving ? "*" : "";
+
+				// Update current depth:
+				document.getElementById("currentDepth").innerHTML = ("Current Depth" + depthAdd + ": "
+					+ curr_pos.toFixed(2).toString());
+			});
 		</script>
 	</body>
 </html>

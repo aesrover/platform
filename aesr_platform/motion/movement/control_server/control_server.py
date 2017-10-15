@@ -49,6 +49,8 @@ class ControlServer(SocketIO):
         self.input_control = self.on('input')(self.input_control)
         self.poll = self.on('poll')(self.poll)
         self.client_disconnect = self.on('disconnect')(self.client_disconnect)
+        self.move_depth_ticks = self.on('move_depth_ticks')(self.move_depth_ticks)
+        self.get_depth_status = self.on('get_depth_status')(self.get_depth_status)
 
     def run_server(self, **kwargs):
         # Start motor drive thread:
@@ -114,6 +116,17 @@ class ControlServer(SocketIO):
             num_wps = 'None'
         d = {'state': self.att.auto, 'remaining': num_wps}
         emit("auto_status", d)
+
+    # Depth:
+    def move_depth_ticks(self, data):
+        """ SocketIO event catch for depth move command. """
+        ticks = float(data['ticks'])
+        self.att.ws.depth_m.move_rel_tick(ticks, t=True)
+
+    def get_depth_status(self, data):
+        """ Emit depth satus and current position using SocketIO, on SocketIO request. """
+        emit('depth_status',
+             {'is_moving': self.att.ws.depth_m.is_moving(), 'curr_pos': self.att.ws.depth_m.curr_tick})
 
     def poll(self, data):
         self.lastConnectTime = time.time()
