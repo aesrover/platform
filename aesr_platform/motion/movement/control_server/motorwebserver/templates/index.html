@@ -1,4 +1,9 @@
 <html>
+	<!--
+		170924 Added buttons for up and down for depth control
+
+
+	-->
 	<head>
 		<link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
 		<meta charset="utf-8">
@@ -42,11 +47,75 @@
 			overflow:auto;
 			white-space: nowrap;
 		}
+        #depthControlUp {
+			position	: absolute;
+			bottom      : 150px;
+			right		: 0px;
+			width		: 100px;
+			height		: 75px;
+			padding		: 5px;
+			text-align	: center;
+			background-color: #FF0000;
+			max-height: 100%;
+			overflow:auto;
+			white-space: nowrap;
+		}
+        #depthControlDown {
+			position	: absolute;
+			bottom      : 75px;
+			right		: 0px;
+			width		: 100px;
+			height		: 75px;
+			padding		: 5px;
+			text-align	: center;
+			background-color: #0000FF;
+			max-height: 100%;
+			overflow:auto;
+			white-space: nowrap;
+		}
+        #depthControlUpFrac {
+			position	: absolute;
+			bottom      : 150px;
+			right		: 100px;
+			width		: 100px;
+			height		: 75px;
+			padding		: 5px;
+			text-align	: center;
+			background-color: #FFA0A0;
+			max-height: 100%;
+			overflow:auto;
+			white-space: nowrap;
+		}
+        #depthControlDownFrac {
+			position	: absolute;
+			bottom      : 75px;
+			right		: 100px;
+			width		: 100px;
+			height		: 75px;
+			padding		: 5px;
+			text-align	: center;
+			background-color: #A0A0FF;
+			max-height: 100%;
+			overflow:auto;
+			white-space: nowrap;
+		}
         #autoControl {
 			position	: absolute;
 			bottom      : 0px;
 			right		: 0px;
-			width		: 25%;
+			width		: 250px;
+			padding		: 5px;
+			text-align	: center;
+			background-color: #D5CFCD;
+			max-height: 100%;
+			overflow:auto;
+			white-space: nowrap;
+		}
+		#depthInfo {
+			position	: absolute;
+			bottom      : 240px;
+			right		: 0px;
+			width		: 200px;
 			padding		: 5px;
 			text-align	: center;
 			background-color: #D5CFCD;
@@ -67,6 +136,7 @@
 	</head>
 	<body>
 		<div id="container"></div>
+
 		<div id="info">
 			AESR
 			<br/>
@@ -74,15 +144,48 @@
 			-
 			works with mouse too
 			<br/>
-		<div id="statusInfo">OTHER STATUS<br/></div>
-		<div id="statusData">STATUS (NEW->OLD)<br/></div>
-		<span id="result"></span>
+
+			<div id="statusInfo">OTHER STATUS<br/></div>
+
+			<div id="statusData">STATUS (NEW->OLD)<br/></div>
+
+			<span id="result"></span>
 		</div>
+
+		<!-- Depth Control-->
+		<div id="depthInfo">
+			<input id="depthReset" type="button" value="Reset Depth" onclick="resetDepth();" /><br/>
+            <div id="currentDepthStatus">None</div><br/>
+			<input id="depthStop" type="button" value="STOP DEPTH" onclick="stopDepth();" /><br/>
+        </div>
+
+        <div id="depthControlUp">
+            <div class="depthStatus">Up +3.0</div><br/>
+            <input class="depthTog" type="button" value="  AAA  " onclick="switchDepthState(3);" /><br/>
+        </div>
+
+        <div id="depthControlDown">
+            <div class="depthStatus">Down -3.0</div><br/>
+            <input class="depthTog" type="button" value="  VVV  " onclick="switchDepthState(-3);" /><br/>
+        </div>
+
+        <div id="depthControlUpFrac">
+            <div class="depthStatus">Up +1.0</div><br/>
+            <input class="depthTog" type="button" value="     A     " onclick="switchDepthState(1);" /><br/>
+        </div>
+
+        <div id="depthControlDownFrac">
+            <div class="depthStatus">Down -1.0</div><br/>
+            <input class="depthTog" type="button" value="     V     " onclick="switchDepthState(-1);" /><br/>
+        </div>
+
         <div id="autoControl">
             <div id="autoStatus">Auto: Disabled</div><br/>
             <input id="autotog" type="button" value="Auto Toggle" onclick="switchAutoState();" /><br/>
         </div>
+
 		<script type="text/javascript" src="/static/scripts/virtualjoystick.js"></script>
+
 		<script type="text/javascript" src="/static/scripts/socket.io-1.4.5.js"></script>
 		<script>
 			function escapeHtml(unsafe) {
@@ -224,8 +327,8 @@
 
 				var outputEl	= document.getElementById('result');
 				outputEl.innerHTML	= '<b>Result:</b> '
-					+ ' dx:'+xValue/joyRadius
-					+ ' dy:'+yValue/joyRadius
+					+ ' dx:' + (xValue/joyRadius).toFixed(2)
+					+ ' dy:' + (yValue/joyRadius).toFixed(2)
 					+ (joystick.right()	? ' right'	: '')
 					+ (joystick.up()	? ' up'		: '')
 					+ (joystick.left()	? ' left'	: '')
@@ -241,6 +344,42 @@
 					socket.emit("input", {x: 0, y: 0})
 				}
 			}, 1/30 * 29000);
+
+
+			// Depth Control:
+			function switchDepthState(ticks) {
+				socket.emit("move_depth_ticks", {ticks: ticks});
+            }
+
+            function resetDepth() {
+				socket.emit('reset_depth');
+            }
+
+            function stopDepth() {
+			    socket.emit('stop_depth');
+			}
+
+            // Depth Position Update Request:
+			setInterval(function(){
+				socket.emit("get_depth_status", {});
+			}, 1/30 * 29000);
+
+			socket.on('depth_status', function (data) {
+				var is_moving = data["is_moving"];
+				var curr_pos = data["curr_pos"];
+
+				// Update if depth moving:
+
+
+				// Add star to indicate incorrect number due to movement:
+				var depthAdd = is_moving ? "*" : "";
+
+				// Update current depth and moving status:
+				document.getElementById("currentDepthStatus").innerHTML = (
+				    "Moving: " + is_moving.toString() + "<br\>" + "Current Depth" + depthAdd + ": "
+					+ curr_pos.toFixed(2).toString()
+				);
+			});
 		</script>
 	</body>
 </html>

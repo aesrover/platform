@@ -49,6 +49,10 @@ class ControlServer(SocketIO):
         self.input_control = self.on('input')(self.input_control)
         self.poll = self.on('poll')(self.poll)
         self.client_disconnect = self.on('disconnect')(self.client_disconnect)
+        self.move_depth_ticks = self.on('move_depth_ticks')(self.move_depth_ticks)
+        self.get_depth_status = self.on('get_depth_status')(self.get_depth_status)
+        self.reset_depth = self.on("reset_depth")(self.reset_depth)
+        self.stop_depth = self.on("stop_depth")(self.stop_depth)
 
     def run_server(self, **kwargs):
         # Start motor drive thread:
@@ -83,9 +87,10 @@ class ControlServer(SocketIO):
         print("Client Connect")
 
     def set_auto_state(self, data):
-        if data['state'] == 1 and len(self.att.wpm.get_wps()) > 0:
+        if self.att.ws.wpm is None:
+            return
+        if data['state'] == 1 and len(self.att.ws.wpm.get_wps()) > 0:
             #  GET NEW TARGET
-            self.att.next_auto_target()
             self.att.set_auto_state(True)
         elif data['state'] == 0:
             self.att.set_auto_state(False)
@@ -94,11 +99,11 @@ class ControlServer(SocketIO):
     # "up", "down", "left", or "right" to stop when finger is lifted off
     def input_control(self, data):
         # target_bearing = 10
-        gain = 1  # 32767/80
-        x_value = data['x']*gain
-        y_value = data['y']*gain
+        gain = 1.  # 32767/80 # Make sure this is a float
+        x_value = data['x'] * gain
+        y_value = data['y'] * gain
 
-        print("[Joystic Update] Joy X: {} | Joy Y: {}".format(x_value, y_value))
+        print("[Joystic Update] Joy X: {:5.2f} | Joy Y: {:5.2f}".format( x_value , y_value ))
 
         self.att.set_thrust(0, y_value*2, -x_value)
 
@@ -107,8 +112,31 @@ class ControlServer(SocketIO):
             emit("status", self.get_status_data())
 
     def req_auto_state(self, data):
-        d = {'state': self.att.auto, 'remaining': len(self.att.wpm.get_wps())}
+        if self.att.ws.wpm is not None:
+            num_wps = len(self.att.ws.wpm.get_wps())
+        else:
+            num_wps = 'None'
+        d = {'state': self.att.auto, 'remaining': num_wps}
         emit("auto_status", d)
+
+    # Depth:
+    def move_depth_ticks(self, data):
+        """ SocketIO event catch for depth move command. """
+        ticks = float(data['ticks'])
+        self.att.ws.depth_m.move_rel_tick(ticks, t=True)
+
+    def get_depth_status(self, data):
+        """ Emit depth satus and current position using SocketIO, on SocketIO request. """
+        emit('depth_status',
+             {'is_moving': self.att.ws.depth_m.is_moving(), 'curr_pos': self.att.ws.depth_m.curr_tick})
+
+    def reset_depth(self):
+        """ SocketIO event catch for depth tick reset """
+        self.att.ws.depth_m.curr_tick = 0
+
+    def stop_depth(self):
+        """ SocketIO event catch to stop depth """
+        self.att.ws.depth_m.stop()
 
     def poll(self, data):
         self.lastConnectTime = time.time()

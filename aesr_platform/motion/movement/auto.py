@@ -28,6 +28,18 @@ class AutoCalc:
 
     def __init__(self, log: Logger, pt: PositionTransducer, ht: HeadingTransducer, max_d, target_r, hold_r, max_m, min_m=0,
                  rot_gain=1):
+        """
+        :param pt: PositionTransducer used for distance/translation
+        :param ht: HeadingTransducer used for current angle
+        :param max_d: Maximum distance to begin scaling thruster power
+        :param target_r: Initial hold shutdown distance
+        :param hold_r: Distance before re-engaging thrusters for repositioning
+        :param max_m: Max motor power
+        :param min_m: Minimum motor power
+        :param rot_gain: Rotation influence gain
+        :param diff_scale: X,Y distance scaling (after calculating difference to target)
+        :param dynamic_scale: DynamicScaleDiff to dynamically scale X,Y distance (example: lon/lat to x/y meters)
+        """
         self.log = log
         self.pt = pt
         self.ht = ht
@@ -40,18 +52,8 @@ class AutoCalc:
 
         self.mode = _Mode.REPOS
 
-        self.target: Tuple[float, float] = None
-
-    #def _pos_diff(self, target: Tuple[float, float]):
-    #    curr_pos = self.pt.read_xy_pos()
-    #    return tuple(np.subtract(target, curr_pos))
-
-    def set_target(self, t: Tuple[float, float]):
-        self.target = t
-        self.mode = _Mode.REPOS  # Ensure repositioning is enabled
-
-    def calc(self) -> AutoData:
-        if self.target is None:
+    def calc(self, t: Tuple[float, float]) -> AutoData:
+        if t is None:
             raise ValueError("No Target")
             #return self.AutoData((0,0,0), None, )
 

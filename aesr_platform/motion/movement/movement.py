@@ -7,10 +7,10 @@ from aesrdevicelib.base.motor import Thruster
 
 from threading import Thread
 from aesrdevicelib.base.motor import Thruster
-from aesrdatabaselib.base.waypoint import WaypointManager
 
 # Local:
 from .auto import AutoCalc
+from ..waypoint import WaypointSelector
 
 
 class ThrusterManager:
@@ -83,7 +83,7 @@ class ThrusterManager:
 
 
 class AutoThrustThreaded(Thread):
-    def __init__(self, log: Logger, tm: ThrusterManager, ac: AutoCalc=None, wpm: WaypointManager=None, rate: int=5,
+    def __init__(self, log: Logger, tm: ThrusterManager, ac: AutoCalc, ws: WaypointSelector, rate: int=5,
                  t_name: str=None):
         super().__init__(name=t_name)
         self.log = log
@@ -91,7 +91,8 @@ class AutoThrustThreaded(Thread):
         self.ac = ac
         self.rt = 1./rate  # Calculate run time
 
-        self.wpm = wpm
+        self.ws = ws
+        self.ws.set_auto(self.get_auto_state)
 
         self.auto = False
 
@@ -109,27 +110,16 @@ class AutoThrustThreaded(Thread):
         self.running = False
         self.join(timeout)
 
-    def __auto_calc(self):
-        if self.ac is None:
-            raise ValueError("No AutoCalc supplied.")
-
     def set_auto_state(self, state: bool):
-        self.__auto_calc()
         if state:
+            self.ws.wpm.select_next_wp()
             self.man_t = None
         else:
-            self.man_t = (0,)*3
+            self.set_thrust(0, 0, 0)
         self.auto = state
 
-    def set_auto_target(self, t: Tuple[float, float]):
-        self.__auto_calc()
-        self.ac.set_target(t)
-
-    def next_auto_target(self):
-        if self.wpm is None:
-            raise ValueError("No waypoint manager!")
-        self.__auto_calc()
-        self.set_auto_target(self.wpm.select_next_wp())
+    def get_auto_state(self):
+        return self.auto
 
     def set_thrust(self, vx, vy, vr):
         self.man_t = (vx, vy, vr)
@@ -137,25 +127,27 @@ class AutoThrustThreaded(Thread):
     def run(self):
         while self.running:
             ts = time.time()
-
             tv = (0,)*3
 
             curr_pos = None
             curr_ang = None
             mode = None
             extra = {}
-            if self.ac is not None and self.auto:
-                d = self.ac.calc()
+
+            if self.ws.get_current_wp() is not None and self.auto:
+                d = self.ac.calc(self.ws.get_current_wp()['pos'])
                 tv = d.nav
                 if not self.last_auto:
                     self.last_auto = True
                     self.log.debug("Auto enabled", extra={'type': 'AUTO', 'itype': 'STATUS', 'status': True,
                                                           'mode': "AUTO"})
 
+                if d.state:
+                    self.ws.set_on_wp()
                 # Set data for log:
                 curr_pos = d.pos
                 curr_ang = d.ang
-                mode = d.mode
+
                 extra['target'] = d.target
                 extra['dist'] = d.dist
                 extra['diff'] = d.diff
@@ -168,23 +160,24 @@ class AutoThrustThreaded(Thread):
                                                            'mode': "MANUAL"})
                 tv = self.man_t
 
-            if self.since_log is None or self.since_log > 10:
-                if curr_pos is None:
-                    curr_pos = self.ac.read_pt()
-                if curr_ang is None:
-                    curr_ang = self.ac.read_ht()
+            if self.ac is not None:
+                if self.since_log is None or self.since_log > 10:
+                    if curr_pos is None:
+                        curr_pos = self.ac.read_pt()
+                    if curr_ang is None:
+                        curr_ang = self.ac.read_ht()
 
-                self.since_log = 0
+                    self.since_log = 0
 
-                data = {'type': 'AUTO', 'itype': 'DATA', 'mode': mode, 'tv': tv,
-                        'curr_pos': curr_pos, 'curr_ang': curr_ang}
-                data.update(**extra)
-                self.log.debug("Auto Data", extra=data)
-            else:
-                self.since_log += 1
+                    data = {'type': 'AUTO', 'itype': 'DATA', 'mode': mode, 'tv': tv,
+                            'curr_pos': curr_pos, 'curr_ang': curr_ang}
+                    data.update(**extra)
+                    self.log.debug("Auto Data", extra=data)
+                else:
+                    self.since_log += 1
 
             try:
-               self.tm.set_thrust(*tv)
+                self.tm.set_thrust(*tv)
             except:
                 self.log.critical("THRUSTER SET FAILED", extra={'type': "THRUSTER", 'state': False})
 
