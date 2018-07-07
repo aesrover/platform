@@ -37,8 +37,6 @@ class AutoCalc:
         :param max_m: Max motor power
         :param min_m: Minimum motor power
         :param rot_gain: Rotation influence gain
-        :param diff_scale: X,Y distance scaling (after calculating difference to target)
-        :param dynamic_scale: DynamicScaleDiff to dynamically scale X,Y distance (example: lon/lat to x/y meters)
         """
         self.log = log
         self.pt = pt
